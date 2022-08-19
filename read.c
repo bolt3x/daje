@@ -15,6 +15,8 @@ int is_pid_dir(const struct dirent *entry) {
 
     return 1;
  }
+   
+
     
     
 //batto
@@ -24,7 +26,9 @@ int read(){
     struct dirent *entry;
     char path[256 + 5 + 5]; // d_name 256 + /proc + /stat
     int pid;
-
+	char state;
+	unsigned long vm;
+	int no;
 
     //open /proc directory.
     procdir = opendir("/proc");
@@ -49,8 +53,14 @@ int read(){
         }
 
         //get PID, process name.
-        fscanf(fp, "%d %s",&pid, &path);
-        printf("%d, %s\n", pid, path);
+        fscanf(fp, "%d %s %c",&pid, &path, &state);
+        for(int i = 0; i<20;i++){
+			fscanf(fp,"%d",&no);
+		}
+		fscanf(fp,"%lu",&vm);
+		
+		
+        printf("%d, %s %c %lu %d\n", pid, path,state,vm);
         fclose(fp);
     }
         
