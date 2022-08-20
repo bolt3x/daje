@@ -1,4 +1,5 @@
 #include "linked_list.h"
+#include "stdlib.h"
 #include <assert.h>
 
 void List_init(ListHead* head) {
@@ -6,6 +7,9 @@ void List_init(ListHead* head) {
   head->last=0;
   head->size=0;
 }
+
+
+
 
 ListItem* List_find(ListHead* head, ListItem* item) {
   // linear scanning of list
@@ -87,7 +91,7 @@ void List_free(ListHead* head){
 
         while(aux){
 
-                ProcListItem* tmp =  (ProcListItem*)aux;
+                ListItem* tmp =  (ListItem*)aux;
                 aux = aux->next;
 
 
