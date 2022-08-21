@@ -5,6 +5,11 @@
 #include "stdlib.h"
 #include "string.h"
 
+
+#define tc_enter_alt_screen() puts("\033[?1049h\033[H")
+#define tc_exit_alt_screen() puts("\033[?1049l")
+#define tc_clear_screen() puts("\x1B[2J")
+#define tc_move_cursor(X, Y) printf("\033[%d;%dH", Y, X)
 #define RED     "\033[31m"
 #define RESET   "\033[0m"
 
@@ -38,10 +43,12 @@ typedef struct PidListItem{
 
 void PidList_print(ListHead * head){
 	ListItem* aux = head->first;
-	while(aux){
+	int i = 0;
+	while(i<20){
 		PidListItem* element = (PidListItem*) aux;
 		printf("%d %c %lu %.1f  %s\n", element->data->pid,element->data->state, element->data->vm,element->data->cpu,element->data->dname);
 		aux = aux->next;
+		i++;
 	}
 	printf("\n");
 }
@@ -103,7 +110,7 @@ void PidList_sort(ListHead* head){
 
 
 //batto
-int read(){
+int myRead(){
 	DIR *procdir;
     FILE *fp;
     FILE *up;
@@ -196,15 +203,19 @@ int read(){
         fclose(fp);
     }
 	PidList_sort(&head);
+	tc_enter_alt_screen();
 	printf(RED "PID STATE VM CPU% NAME\n" RESET);
     PidList_print(&head);        
+    tc_move_cursor(0,0);
      closedir(procdir);
      return 0;
 }
 	
 	int main(){
+
+	myRead();
+
 	
-	read();
 	return 1;
 }
     
