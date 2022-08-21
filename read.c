@@ -5,6 +5,10 @@
 #include "stdlib.h"
 #include "string.h"
 
+#define RED     "\033[31m"
+#define RESET   "\033[0m"
+
+
 //batto
 //helper function to check if a struct dirent from /proc is a PID directory.
 int is_pid_dir(const struct dirent *entry) {
@@ -36,7 +40,7 @@ void PidList_print(ListHead * head){
 	ListItem* aux = head->first;
 	while(aux){
 		PidListItem* element = (PidListItem*) aux;
-		printf("%d %s %c %lu %.1f%\n", element->data->pid,element->data->dname, element->data->state, element->data->vm,element->data->cpu);
+		printf("%d %c %lu %.1f  %s\n", element->data->pid,element->data->state, element->data->vm,element->data->cpu,element->data->dname);
 		aux = aux->next;
 	}
 	printf("\n");
@@ -97,13 +101,7 @@ void PidList_sort(ListHead* head){
 
 
 
-int main(){
-	
-	read();
-	return 1;
-}
-    
-    
+
 //batto
 int read(){
 	DIR *procdir;
@@ -198,10 +196,17 @@ int read(){
         fclose(fp);
     }
 	PidList_sort(&head);
+	printf(RED "PID STATE VM CPU% NAME\n" RESET);
     PidList_print(&head);        
      closedir(procdir);
      return 0;
 }
 	
+	int main(){
 	
+	read();
+	return 1;
+}
+    
+    
 	
