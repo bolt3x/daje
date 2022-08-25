@@ -212,13 +212,4 @@ int myRead(){
 }
 	
 
-int main(){
-	while(1){
-		myRead();
-		sleep(1);
-		clear_screen();
-	}
-	return 1;
-}
-    
-	
+
