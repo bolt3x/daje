@@ -4,7 +4,7 @@
 #include "linked_list.c"
 #include "stdlib.h"
 #include "string.h"
-
+#include "terminal_control.h"
 
 #define tc_enter_alt_screen() puts("\033[?1049h\033[H")
 #define tc_exit_alt_screen() puts("\033[?1049l")
@@ -204,20 +204,21 @@ int myRead(){
     }
 	PidList_sort(&head);
 	tc_enter_alt_screen();
+	gotoxy(4,0);
 	printf(RED "PID STATE VM CPU% NAME\n" RESET);
     PidList_print(&head);        
-    tc_move_cursor(0,0);
-     closedir(procdir);
+    closedir(procdir);
      return 0;
 }
 	
-	int main(){
 
-	myRead();
-
-	
+int main(){
+	while(1){
+		myRead();
+		sleep(1);
+		clear_screen();
+	}
 	return 1;
 }
-    
     
 	
