@@ -47,10 +47,12 @@ int signal_sender(){
 		clear_lines(0,0,1);
 		printf("Indicare il pid del processo a cui inviare il segnale: ");
 		scanf("%d",&pid);
-			
+		clear_lines(0,0,1);
+		gotoxy(0,0);	
 		printf("Selezionare il segnale da inviare: K per SIGKILL: ");
 		scanf(" %c",&signal);
-			
+		clear_lines(0,0,1);
+		gotoxy(0,0);	
 		if(signal == 'K'){
 			kill(pid,SIGKILL);
 			printf("Inviato il segnale SIGKILL\n");
@@ -76,10 +78,8 @@ int main() {
 	while(1){
 		
 		gotoxy(4,0);
-		sleep(1);
 		myRead();
-		//signal_sender();
-		sleep(1);
+		signal_sender();
 		clear_lines(4,0,21);
 	}
 	
