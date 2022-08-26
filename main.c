@@ -9,7 +9,16 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+struct winsize w;
 
+int win_change_handler(){
+	
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	
+	clear_screen();
+	myRead();
+	return 0;
+}
 
 //bolt3x 
 //helper function that clears n lines starting from (x,y)
@@ -22,8 +31,7 @@ void clear_lines(int x,int y,int n){
 			printf(" ");
 		printf("\n");
 	}
-	
-	gotoxy(x,y);
+
 }
 
 
@@ -49,6 +57,7 @@ int signal_sender(){
 	fflush(NULL);
 	if (ret > 0 && (fd.revents & POLLIN != 0))  {
 		clear_lines(0,0,1);
+		gotoxy(0,0);
 		printf("Indicare il pid del processo a cui inviare il segnale: ");
 		scanf("%d",&pid);
 		clear_lines(0,0,1);
@@ -66,24 +75,23 @@ int signal_sender(){
 			kill(pid,SIGTERM);
 			printf("Inviato il segnale SIGTERM\n");
 		}
-		sleep(1);
+		
 		clear_lines(0,0,3);
 	}
-	else{
-		printf("\nTIMEOUT\n");
-	}
+
 	return 0;
 }
 
 int main() {
 	
+	signal(SIGWINCH,win_change_handler);
+	
 	clear_screen();
-
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	
 	while(1){
 		
 		gotoxy(4,0);
-		struct winsize w;
-		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 		myRead(w.ws_row);
 		signal_sender();
 		clear_lines(4,0,21);
