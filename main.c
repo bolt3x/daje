@@ -6,6 +6,10 @@
 #include <poll.h>
 #include "terminal_control.h"
 #include "read.h"
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+
 
 //bolt3x 
 //helper function that clears n lines starting from (x,y)
@@ -78,7 +82,9 @@ int main() {
 	while(1){
 		
 		gotoxy(4,0);
-		myRead();
+		struct winsize w;
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+		myRead(w.ws_row);
 		signal_sender();
 		clear_lines(4,0,21);
 	}

@@ -5,6 +5,8 @@
 #include "stdlib.h"
 #include "string.h"
 #include "terminal_control.h"
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #define tc_enter_alt_screen() puts("\033[?1049h\033[H")
 #define tc_exit_alt_screen() puts("\033[?1049l")
@@ -41,16 +43,16 @@ typedef struct PidListItem{
 }PidListItem;
 
 
-void PidList_print(ListHead * head){
+void PidList_print(ListHead * head,int rows){
 	ListItem* aux = head->first;
-	int i = 0;
-	while(i<20){
+	
+	
+	for(int k = 0 ; k<=rows-5;k++){
 		PidListItem* element = (PidListItem*) aux;
 		printf("%d %c %lu %.1f  %s\n", element->data->pid,element->data->state, element->data->vm,element->data->cpu,element->data->dname);
 		aux = aux->next;
-		i++;
 	}
-	printf("\n");
+	
 }
 /* function to swap data of two nodes a and b*/
 void swap(ListItem *a, ListItem *b) 
@@ -110,7 +112,7 @@ void PidList_sort(ListHead* head){
 
 
 //batto
-int myRead(){
+int myRead(int rows){
 	DIR *procdir;
     FILE *fp;
     FILE *up;
@@ -203,13 +205,13 @@ int myRead(){
         fclose(fp);
     }
 	PidList_sort(&head);
-	tc_enter_alt_screen();
-	gotoxy(4,0);
 	printf(RED "PID STATE VM CPU% NAME\n" RESET);
-    PidList_print(&head);        
+    PidList_print(&head,rows);        
     closedir(procdir);
      return 0;
 }
+	
+
 	
 
 
