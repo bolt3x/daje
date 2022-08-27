@@ -16,7 +16,6 @@ int win_change_handler(){
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	
 	clear_screen();
-	myRead();
 	return 0;
 }
 
@@ -91,10 +90,10 @@ int main() {
 	
 	while(1){
 		
-		gotoxy(4,0);
+		
 		myRead(w.ws_row);
 		signal_sender();
-		clear_lines(4,0,21);
+		clear_lines(4,0,w.ws_row);
 	}
 	
 

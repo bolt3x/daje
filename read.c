@@ -8,10 +8,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#define tc_enter_alt_screen() puts("\033[?1049h\033[H")
-#define tc_exit_alt_screen() puts("\033[?1049l")
-#define tc_clear_screen() puts("\x1B[2J")
-#define tc_move_cursor(X, Y) printf("\033[%d;%dH", Y, X)
+
 #define RED     "\033[31m"
 #define RESET   "\033[0m"
 
@@ -33,6 +30,8 @@ typedef struct PidData{
 	char dname[256];
 	char state;
 	unsigned long vm;
+	long int rss;
+	float mempercentage;
 	float cpu;
 }PidData;
  
@@ -45,11 +44,13 @@ typedef struct PidListItem{
 
 void PidList_print(ListHead * head,int rows){
 	ListItem* aux = head->first;
+	int l = rows-8;
 	
-	
-	for(int k = 0 ; k<=rows-5;k++){
+	for(int k = 0 ; k<l;k++){
 		PidListItem* element = (PidListItem*) aux;
-		printf("%d %c %lu %.1f  %s\n", element->data->pid,element->data->state, element->data->vm,element->data->cpu,element->data->dname);
+		gotoxy(10+k,0);
+		printf("%d    %c    %lu  %ld  %.2f%%  %.2f%%    %s", element->data->pid,element->data->state, element->data->vm,element->data->rss,element->data->mempercentage,element->data->cpu,element->data->dname);
+	
 		aux = aux->next;
 	}
 	
@@ -114,6 +115,7 @@ void PidList_sort(ListHead* head){
 //batto
 int myRead(int rows){
 	DIR *procdir;
+	FILE *meminfo;
     FILE *fp;
     FILE *up;
     struct dirent *entry;
@@ -122,15 +124,15 @@ int myRead(int rows){
     char dname[256];
 	char state;
 	unsigned long vm;
+	long int rss;
 	int no;
-	float uptime;
-	unsigned long utime;
+    long int uptime;
+	unsigned long long utime;
 	unsigned long stime;
 	unsigned long long int starttime;
 	float cpu;
-	int CLK_TCK = 100;
-	
-	
+	float CLK_TCK = 100;
+	float mempercentage;
 	
 	
 
@@ -175,15 +177,36 @@ int myRead(int rows){
 		}
 		fscanf(fp,"%llu",&starttime);
 		fscanf(fp,"%lu",&vm);
+		fscanf(fp,"%ld",&rss);
 		
 		
 		//getting system's uptime
 		up = fopen("/proc/uptime","r");
 		fscanf(up,"%llu",&uptime);
 		fclose(up);
+		meminfo = fopen("/proc/meminfo","r");
+		char line[80];
+		fgets(line,sizeof(line),meminfo);
+		char * p = line;
+		long memtotal;
+		while(*p){
+			if(isdigit(*p)){
+			memtotal = strtol(p,&p,10);
+			}
+			p++;
+		}
+		fclose(meminfo);
+		
+		starttime = starttime/CLK_TCK;
+	
+		utime = utime/CLK_TCK;
+	
+		stime = stime/CLK_TCK;
+		
+		long unsigned elapsed = uptime-starttime;
 		
 		//calculating cpu percentege dividing sum of user and kernel time with elapsed time
-		cpu = ((utime+stime)/CLK_TCK)/(uptime - (starttime/CLK_TCK));
+		cpu = ((float)(utime+stime)/(float)(elapsed))*100;
 		
 		
 		//creating linkedlist element with process information
@@ -196,17 +219,35 @@ int myRead(int rows){
 		element->data->state = state;
 		//top misura in kb
 		vm = vm/1000;
-		element->data->vm = vm; 
-		element->data->cpu = -(cpu);
+		element->data->vm = vm;
+		element->data->rss = rss;
+		element->data->cpu = cpu;
+		mempercentage = ((float)rss/(float)memtotal)*100;
+		element->data->mempercentage = mempercentage;
 		List_insert(&head,head.last,(ListItem*)element);
 	
 
-	
+		
         fclose(fp);
     }
 	PidList_sort(&head);
-	printf(RED "PID STATE VM CPU% NAME\n" RESET);
-    PidList_print(&head,rows);        
+	gotoxy(2,0);
+	
+	
+	
+	printf(RED R"EOF(
+______       ___            __   _______ 
+|       \     /   \          |  | |   ____|
+|  .--.  |   /  ^  \         |  | |  |__   
+|  |  |  |  /  /_\  \  .--.  |  | |   __|  
+|  '--'  | /  _____  \ |  `--'  | |  |____ 
+|_______/ /__/     \__\ \______/  |_______|                      
+)EOF"RESET);
+
+
+	gotoxy(9,0);
+	printf(RED "PID    STATE    VM  RES  %MEM  CPU%     NAME    MEM" RESET);
+   PidList_print(&head,rows);        
     closedir(procdir);
      return 0;
 }
