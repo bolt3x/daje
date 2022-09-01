@@ -9,9 +9,6 @@
 #include <unistd.h>
 
 
-#define RED     "\033[31m"
-#define RESET   "\033[0m"
-
 
 //batto
 //helper function to check if a struct dirent from /proc is a PID directory.

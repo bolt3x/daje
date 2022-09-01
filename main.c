@@ -19,6 +19,14 @@ int win_change_handler(){
 	return 0;
 }
 
+void quit_handler(){
+	
+	clear_screen();
+	
+	echo_on();
+	
+	exit(EXIT_SUCCESS);
+}
 //bolt3x 
 //helper function that clears n lines starting from (x,y)
 void clear_lines(int x,int y,int n){
@@ -50,13 +58,14 @@ int signal_sender(){
 	
 	
 	gotoxy(0,0);
-	printf("Premere ENTER per inviare un sengale\n");
+	echo_off();
+	printf("Premere ENTER per inviare un sengale");
 	fflush(NULL);
 	int ret = poll(&fd, 1, timeout);
-	fflush(NULL);
 	if (ret > 0 && (fd.revents & POLLIN != 0))  {
 		clear_lines(0,0,1);
 		gotoxy(0,0);
+		echo_on();
 		printf("Indicare il pid del processo a cui inviare il segnale: ");
 		scanf("%d",&pid);
 		clear_lines(0,0,1);
@@ -85,7 +94,10 @@ int main() {
 	
 	signal(SIGWINCH,win_change_handler);
 	
+	signal(SIGINT,quit_handler);
+	
 	clear_screen();
+	
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	
 	while(1){
