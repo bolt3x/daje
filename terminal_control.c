@@ -1,5 +1,5 @@
 #include <termios.h>
-
+#include "stdio.h"
 void echo_on(){
 
 	struct termios term;

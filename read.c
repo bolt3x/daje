@@ -45,9 +45,9 @@ void PidList_print(ListHead * head,int rows){
 	
 	for(int k = 0 ; k<l;k++){
 		PidListItem* element = (PidListItem*) aux;
-		gotoxy(10+k,0);
-		printf("%d    %c    %lu  %ld  %.2f%%  %.2f%%    %s", element->data->pid,element->data->state, element->data->vm,element->data->rss,element->data->mempercentage,element->data->cpu,element->data->dname);
-	
+		gotoxy(0, 10+k);
+		//%-12s%-12d%-12d\n
+		printf("%-12d %-12c %-12lu %-12ld %-12.2f %-12.2f% -12s", element->data->pid,element->data->state, element->data->vm,element->data->rss,element->data->mempercentage,element->data->cpu,element->data->dname);
 		aux = aux->next;
 	}
 	
@@ -179,9 +179,17 @@ int myRead(int rows){
 		
 		//getting system's uptime
 		up = fopen("/proc/uptime","r");
+		if(!up){
+			perror("fopen failed");
+			return 1;
+		}
 		fscanf(up,"%llu",&uptime);
 		fclose(up);
 		meminfo = fopen("/proc/meminfo","r");
+		if(!meminfo){
+			perror("fopen failed");
+			return 1;
+		}
 		char line[80];
 		fgets(line,sizeof(line),meminfo);
 		char * p = line;
@@ -228,27 +236,30 @@ int myRead(int rows){
         fclose(fp);
     }
 	PidList_sort(&head);
-	gotoxy(2,0);
+	gotoxy(0,2);
 	
 	
+	
+
 	
 	printf(RED R"EOF(
-______       ___            __   _______ 
-|       \     /   \          |  | |   ____|
-|  .--.  |   /  ^  \         |  | |  |__   
-|  |  |  |  /  /_\  \  .--.  |  | |   __|  
-|  '--'  | /  _____  \ |  `--'  | |  |____ 
-|_______/ /__/     \__\ \______/  |_______|                      
+______       ___            __   _______     ______       ___            __   _______ 
+|       \     /   \          |  | |   ____|  |       \     /   \          |  | |   ____|
+|  .--.  |   /  ^  \         |  | |  |__     |  .--.  |   /  ^  \         |  | |  |__   
+|  |  |  |  /  /_\  \  .--.  |  | |   __|    |  |  |  |  /  /_\  \  .--.  |  | |   __|  
+|  '--'  | /  _____  \ |  `--'  | |  |____   |  '--'  | /  _____  \ |  `--'  | |  |____
+|_______/ /__/     \__\ \______/  |_______|  |_______/ /__/     \__\ \______/  |_______|                    
 )EOF"RESET);
 
 
-	gotoxy(9,0);
-	printf(RED "PID    STATE    VM  RES  %MEM  CPU%     NAME    MEM" RESET);
-   PidList_print(&head,rows);        
+	gotoxy(0,9);
+	printf(RED"PID          STATE        VM           RES          MEM          CPU         NAME"RESET);
+	PidList_print(&head,rows);        
     closedir(procdir);
      return 0;
 }
-	
+
+
 
 	
 

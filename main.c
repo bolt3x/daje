@@ -31,7 +31,7 @@ void quit_handler(){
 //helper function that clears n lines starting from (x,y)
 void clear_lines(int x,int y,int n){
 	
-	gotoxy(x,y);
+	gotoxy(y,x);
 	
 	for(int i = 0; i < n; i++){
 		for(int j = 0; j < 100; j++)
