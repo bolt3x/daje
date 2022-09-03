@@ -22,6 +22,8 @@ int is_pid_dir(const struct dirent *entry) {
 
     return 1;
  }
+ 
+ //struct containing data of processes
 typedef struct PidData{
 	int pid;
 	char dname[256];
@@ -39,6 +41,7 @@ typedef struct PidListItem{
 }PidListItem;
 
 
+//function to print processes data in order
 void PidList_print(ListHead * head,int rows){
 	ListItem* aux = head->first;
 	int l = rows-8;
@@ -47,7 +50,7 @@ void PidList_print(ListHead * head,int rows){
 		PidListItem* element = (PidListItem*) aux;
 		gotoxy(0, 10+k);
 		//%-12s%-12d%-12d\n
-		printf("%-12d %-12c %-12lu %-12ld %-12.2f %-12.2f% -12s", element->data->pid,element->data->state, element->data->vm,element->data->rss,element->data->mempercentage,element->data->cpu,element->data->dname);
+		printf("%-12d %-12c %-12lu %-12ld %-12.2f  %-12.2f  %-12s", element->data->pid,element->data->state, element->data->vm,element->data->rss,element->data->mempercentage,element->data->cpu,element->data->dname);
 		aux = aux->next;
 	}
 	
@@ -65,6 +68,7 @@ void swap(ListItem *a, ListItem *b)
 	
 } 
 
+//sorting algoritm based on VM
 void bubbleSort(ListItem * start) 
 { 
     int swapped, i; 
@@ -120,16 +124,16 @@ int myRead(int rows){
     int pid;
     char dname[256];
 	char state;
-	unsigned long vm;
-	long int rss;
+	unsigned long vm; //virtual memory
+	long int rss;	//resident set size: number of pages the process has in real memory
 	int no;
-    long int uptime;
-	unsigned long long utime;
-	unsigned long stime;
-	unsigned long long int starttime;
+    long int uptime; //system's uptime
+	unsigned long long utime; //amount of time the process has been running in user mode
+	unsigned long stime; //amount of time the process has been running in kernel mode
+	unsigned long long int starttime; //process's start time measured since system booted
 	float cpu;
-	float CLK_TCK = 100;
-	float mempercentage;
+	float CLK_TCK = (float) sysconf(_SC_CLK_TCK); //getting number of clock ticks in order to convert in seconds
+	float mempercentage; //top measures %MEM as RES compared to memory without swap
 	
 	
 
@@ -163,18 +167,18 @@ int myRead(int rows){
         
 	
         //get PID, process name, state, virtual memory.
-        fscanf(fp, "%d %s %c",&pid, &dname, &state);
+        fscanf(fp, "%d %s %c",&pid, &dname, &state); // 1st value process's ID, 2nd value filename, 3rd value process's state
         for(int i = 0; i<10;i++){
 			fscanf(fp,"%d",&no);
 		}
-		fscanf(fp,"%lu",&utime);
-		fscanf(fp,"%ld",&stime);
+		fscanf(fp,"%lu",&utime); // 14th value
+		fscanf(fp,"%ld",&stime); // 15th value
 		for(int i = 0; i<6;i++){
 			fscanf(fp,"%d",&no);
 		}
-		fscanf(fp,"%llu",&starttime);
-		fscanf(fp,"%lu",&vm);
-		fscanf(fp,"%ld",&rss);
+		fscanf(fp,"%llu",&starttime); //22nd value
+		fscanf(fp,"%lu",&vm); //23rd value
+		fscanf(fp,"%ld",&rss); // 24th value
 		
 		
 		//getting system's uptime
@@ -185,30 +189,31 @@ int myRead(int rows){
 		}
 		fscanf(up,"%llu",&uptime);
 		fclose(up);
-		meminfo = fopen("/proc/meminfo","r");
+		meminfo = fopen("/proc/meminfo","r"); // first field of meminfo is total memory without swap 
 		if(!meminfo){
 			perror("fopen failed");
 			return 1;
 		}
-		char line[80];
+		char line[80];  //first line is  "MemTotal:        xxxxx kB", need to extract xxxx
+
 		fgets(line,sizeof(line),meminfo);
 		char * p = line;
 		long memtotal;
 		while(*p){
 			if(isdigit(*p)){
-			memtotal = strtol(p,&p,10);
+			memtotal = strtol(p,&p,10);//converts initial part of the string in digit with base 10
 			}
 			p++;
 		}
 		fclose(meminfo);
 		
-		starttime = starttime/CLK_TCK;
+		starttime = starttime/CLK_TCK; //converting clock ticks into seconds
 	
-		utime = utime/CLK_TCK;
+		utime = utime/CLK_TCK; //converting clock ticks into seconds
 	
-		stime = stime/CLK_TCK;
+		stime = stime/CLK_TCK; //converting clock ticks into seconds
 		
-		long unsigned elapsed = uptime-starttime;
+		long unsigned elapsed = uptime-starttime; //calculating process's elapsed time
 		
 		//calculating cpu percentege dividing sum of user and kernel time with elapsed time
 		cpu = ((float)(utime+stime)/(float)(elapsed))*100;
@@ -222,7 +227,7 @@ int myRead(int rows){
 		element->data->pid = pid;
 		strncpy(element->data->dname,dname,256);
 		element->data->state = state;
-		//top misura in kb
+		//top measures in kb
 		vm = vm/1000;
 		element->data->vm = vm;
 		element->data->rss = rss;
@@ -235,6 +240,7 @@ int myRead(int rows){
 		
         fclose(fp);
     }
+    //sorting process's list
 	PidList_sort(&head);
 	gotoxy(0,2);
 	
@@ -253,7 +259,7 @@ ______       ___            __   _______     ______       ___            __   __
 
 
 	gotoxy(0,9);
-	printf(RED"PID          STATE        VM           RES          MEM          CPU         NAME"RESET);
+	printf(RED"PID          STATE        VM           RES          MEM           CPU           NAME"RESET);
 	PidList_print(&head,rows);        
     closedir(procdir);
      return 0;
