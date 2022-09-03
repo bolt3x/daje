@@ -1,6 +1,7 @@
 #pragma once
 
 #include <termios.h>
+#include <stdio.h>
 
 #define clear_screen() puts("\x1B[2J")
 
@@ -14,4 +15,4 @@
 
 void echo_off();
 void echo_on();
-
+void clear_lines(int x,int y,int n);

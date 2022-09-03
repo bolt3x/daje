@@ -1,12 +1,12 @@
-#include "stdio.h"
-#include "dirent.h"
-#include "read.h"
-#include "linked_list.c"
-#include "stdlib.h"
-#include "string.h"
-#include "terminal_control.h"
+#include <stdio.h>
+#include <dirent.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "terminal_control.h"
+#include "linked_list.h"
 
 
 
@@ -40,6 +40,22 @@ typedef struct PidListItem{
 	
 }PidListItem;
 
+//bolt3x
+//function to free the linked_list
+
+void List_free(ListHead* head){
+
+        ListItem* aux = head->first;
+
+        while(aux){
+
+                PidListItem* tmp =  (PidListItem*)aux;
+                aux = aux->next;
+
+				free(tmp->data);
+                free(tmp);
+        }
+}
 
 //function to print processes data in order
 void PidList_print(ListHead * head,int rows){
@@ -64,6 +80,7 @@ void swap(ListItem *a, ListItem *b)
 	memcpy(temp,as->data,sizeof(PidData));
 	memcpy(as->data,bs->data,sizeof(PidData));
 	memcpy(bs->data,temp,sizeof(PidData));
+	free(temp);
 	
 	
 } 
@@ -260,7 +277,8 @@ ______       ___            __   _______     ______       ___            __   __
 
 	gotoxy(0,9);
 	printf(RED"PID          STATE        VM           RES          MEM           CPU           NAME"RESET);
-	PidList_print(&head,rows);        
+	PidList_print(&head,rows);   
+	List_free(&head);     
     closedir(procdir);
      return 0;
 }

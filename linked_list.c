@@ -82,19 +82,3 @@ ListItem* List_detach(ListHead* head, ListItem* item) {
   return item;
 }
 
-//bolt3x
-//function to free the linked_list
-
-void List_free(ListHead* head){
-
-        ListItem* aux = head->first;
-
-        while(aux){
-
-                ListItem* tmp =  (ListItem*)aux;
-                aux = aux->next;
-
-
-                free(tmp);
-        }
-}

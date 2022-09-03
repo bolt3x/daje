@@ -1,2 +1,3 @@
-int is_pid_dir(const struct dirent *entry);
+#pragma once
+
 int myRead();
