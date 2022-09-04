@@ -24,7 +24,8 @@ int signal_sender(){
 	echo_off();
 	printf("Premere ENTER per inviare un sengale");
 	fflush(NULL);
-	int ret = poll(&fd, 1, timeout);
+	int ret = 0;
+	ret = poll(&fd, 1, timeout);
 	if (ret > 0 && (fd.revents & POLLIN != 0))  {
 		clear_lines(0,0,1);
 		gotoxy(0,0);

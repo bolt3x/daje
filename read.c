@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "terminal_control.h"
-#include "linked_list.h"
 
 
 
@@ -19,116 +18,39 @@ int is_pid_dir(const struct dirent *entry) {
         if (!isdigit(*p))
             return 0;
     }
-
+	
     return 1;
  }
  
  //struct containing data of processes
-typedef struct PidData{
+typedef struct PidListItem{
 	int pid;
-	char dname[256];
+	char dname[32];
 	char state;
 	unsigned long vm;
 	long int rss;
 	float mempercentage;
 	float cpu;
-}PidData;
- 
-typedef struct PidListItem{
-	ListItem list;
-	PidData * data;
-	
-}PidListItem;
+	}PidListItem;
 
-//bolt3x
-//function to free the linked_list
-
-void List_free(ListHead* head){
-
-        ListItem* aux = head->first;
-
-        while(aux){
-
-                PidListItem* tmp =  (PidListItem*)aux;
-                aux = aux->next;
-
-				free(tmp->data);
-                free(tmp);
-        }
-}
 
 //function to print processes data in order
-void PidList_print(ListHead * head,int rows){
-	ListItem* aux = head->first;
-	int l = rows-8;
+void PidList_print(PidListItem*proc_list,int size,int rows){
 	
-	for(int k = 0 ; k<l;k++){
-		PidListItem* element = (PidListItem*) aux;
-		gotoxy(0, 10+k);
+	for(int index = 0 ; index<rows-8 && index<size;index++){
+		
+		gotoxy(0, 10+index);
 		//%-12s%-12d%-12d\n
-		printf("%-12d %-12c %-12lu %-12ld %-12.2f  %-12.2f  %-12s", element->data->pid,element->data->state, element->data->vm,element->data->rss,element->data->mempercentage,element->data->cpu,element->data->dname);
-		aux = aux->next;
+		printf("%-12d %-12c %-12lu %-12ld %-12.2f  %-12.2f  %-12s", proc_list[index].pid,proc_list[index].state, proc_list[index].vm,proc_list[index].rss,proc_list[index].mempercentage,proc_list[index].cpu,proc_list[index].dname);
 	}
 	
 }
-/* function to swap data of two nodes a and b*/
-void swap(ListItem *a, ListItem *b) 
-{ 
-	PidData * temp =(PidData*) malloc(sizeof(PidData));
-	PidListItem* as = (PidListItem*)a;
-	PidListItem* bs = (PidListItem*)b;
-	memcpy(temp,as->data,sizeof(PidData));
-	memcpy(as->data,bs->data,sizeof(PidData));
-	memcpy(bs->data,temp,sizeof(PidData));
-	free(temp);
-	
-	
-} 
 
-//sorting algoritm based on VM
-void bubbleSort(ListItem * start) 
-{ 
-    int swapped, i; 
-    ListItem *ptr1; 
-	ListItem *lptr = NULL; 
-	PidListItem * current;
-	PidListItem * next;
-    /* Checking for empty list */
-    if (start == NULL) 
-        return; 
-  
-    do
-    { 
-        swapped = 0; 
-        ptr1 = start; 
-  
-        while (ptr1->next != lptr) 
-        { 
-			current = (PidListItem*)ptr1;
-			next = (PidListItem*)ptr1->next;
-            if (current->data->vm < next->data->vm) 
-            { 
-                swap(ptr1, ptr1->next); 
-                swapped = 1; 
-            } 
-            ptr1 = ptr1->next; 
-        } 
-        lptr = ptr1; 
-    } 
-    while (swapped); 
-} 
-  
-
-
-
-void PidList_sort(ListHead* head){
-	bubbleSort(head->first);	
+int compare(const void * a, const void * b){
+	PidListItem p = *(PidListItem*)a;
+	PidListItem q = *(PidListItem*)b;
+	return q.vm - p.vm;
 }
-
-
-
-
-
 
 //batto
 int myRead(int rows){
@@ -137,9 +59,9 @@ int myRead(int rows){
     FILE *fp;
     FILE *up;
     struct dirent *entry;
-    char path[256 + 5 + 5]; // d_name 256 + /proc + /stat
+    char path[32 + 5 + 5]; // d_name 256 + /proc + /stat
     int pid;
-    char dname[256];
+    char dname[32];
 	char state;
 	unsigned long vm; //virtual memory
 	long int rss;	//resident set size: number of pages the process has in real memory
@@ -160,15 +82,27 @@ int myRead(int rows){
         perror("opendir failed");
         return 1;
     }
-    ListHead head;
-	List_init(&head);
+
 	
 	
+	int n_proc = 0;
 	
+	while ((entry = readdir(procdir))) {
+       //skip anything that is not a PID directory.
+       if (is_pid_dir(entry))
+           n_proc += 1;
+	}
 	
+	closedir(procdir);
+	procdir = opendir("/proc");
 	
+	int index = 0;
+	PidListItem proc_list[n_proc];
     //iterate through all files and directories of /proc.
-    while ((entry = readdir(procdir))) {
+    while (index < n_proc) {
+		if(!(entry = readdir(procdir))){
+			break;
+		}
         //skip anything that is not a PID directory.
         if (!is_pid_dir(entry))
             continue;
@@ -236,29 +170,26 @@ int myRead(int rows){
 		cpu = ((float)(utime+stime)/(float)(elapsed))*100;
 		
 		
-		//creating linkedlist element with process information
-		PidListItem* element =(PidListItem*)malloc(sizeof(PidListItem));
-		element->data = (PidData*)malloc(sizeof(PidData));
-		element->list.prev = 0;
-		element->list.next = 0;
-		element->data->pid = pid;
-		strncpy(element->data->dname,dname,256);
-		element->data->state = state;
+		
+		//creating element with process information
+		proc_list[index].pid = pid;
+		strncpy(proc_list[index].dname,dname,32);
+		proc_list[index].state = state;
 		//top measures in kb
 		vm = vm/1000;
-		element->data->vm = vm;
-		element->data->rss = rss;
-		element->data->cpu = cpu;
+		proc_list[index].vm = vm;
+		proc_list[index].rss = rss;
+		proc_list[index].cpu = cpu;
 		mempercentage = ((float)rss/(float)memtotal)*100;
-		element->data->mempercentage = mempercentage;
-		List_insert(&head,head.last,(ListItem*)element);
+		proc_list[index].mempercentage = mempercentage;
 	
 
 		
-        fclose(fp);
+		fclose(fp);
+		index++;
+		
     }
-    //sorting process's list
-	PidList_sort(&head);
+	
 	gotoxy(0,2);
 	
 	
@@ -274,12 +205,13 @@ ______       ___            __   _______     ______       ___            __   __
 |_______/ /__/     \__\ \______/  |_______|  |_______/ /__/     \__\ \______/  |_______|                    
 )EOF"RESET);
 
-
+	
 	gotoxy(0,9);
 	printf(RED"PID          STATE        VM           RES          MEM           CPU           NAME"RESET);
-	PidList_print(&head,rows);   
-	List_free(&head);     
+	qsort(proc_list,n_proc,sizeof(PidListItem),compare);
+	PidList_print(proc_list,n_proc,rows);       
     closedir(procdir);
+ 
      return 0;
 }
 

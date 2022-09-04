@@ -3,13 +3,11 @@ CCOPTS=--std=gnu99  -w
 AR=ar
 
 OBJS=daje.o\
-	 linked_list.o\
 	 read.o\
 	 signal_sender.o\
 	 terminal_control.o
 
-HEADERS=linked_list.h\
-		read.h\
+HEADERS=read.h\
 		signal_sender.h\
 		terminal_control.h
 
