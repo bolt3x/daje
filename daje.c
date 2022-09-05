@@ -46,7 +46,7 @@ int main() {
 		
 		signal_sender();
 		
-		clear_lines(1,0,w.ws_row);
+		clear_lines(2,0,w.ws_row);
 		
 	}
 	
